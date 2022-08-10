@@ -1,15 +1,41 @@
 package handler
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/JEONG-YUNHO01/test-jwt/db"
-	"github.com/JEONG-YUNHO01/test-jwt/helper"
-	"github.com/JEONG-YUNHO01/test-jwt/models"
+	"github.com/nicewook/authjwt/db"
+	"github.com/nicewook/authjwt/helper"
+	"github.com/nicewook/authjwt/models"
 
 	"github.com/labstack/echo/v4"
 )
+
+// start - util
+func CreateUser(user *models.User) (int64, error) {
+	db := db.Connect()
+	result, err := db.Exec("INSERT INTO users VALUES(?,?);", user.Username, user.Password)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+func FindUser(user *models.User) (models.User, error) {
+	var foundUser models.User
+	db := db.Connect()
+	row := db.QueryRow("SELECT * FROM users (username, password) WHERE username=?", user.Username)
+
+	if err := row.Scan(&foundUser.Username, &foundUser.Password); err == sql.ErrNoRows {
+		return foundUser, errors.New("fail to find user")
+	}
+	return foundUser, nil
+}
+
+// end - util
 
 func SignUp(c echo.Context) error {
 	user := new(models.User)
@@ -19,11 +45,9 @@ func SignUp(c echo.Context) error {
 			"message": "bad request",
 		})
 	}
-	db := db.Connect()
-	result := db.Find(&user, "email=?", user.Email)
 
 	// 이미 이메일이 존재할 경우의 처리
-	if result.RowsAffected != 0 {
+	if _, err := FindUser(user); err == nil { // no error, already exist
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"message": "existing email",
 		})
@@ -39,7 +63,9 @@ func SignUp(c echo.Context) error {
 	user.Password = hashpw
 
 	// 위의 두단계에서 err가 nil일 경우 DB에 유저를 생성
-	if err := db.Create(&user); err.Error != nil {
+	var userID int64
+
+	if userID, err = CreateUser(user); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "Failed SignUp",
 		})
@@ -47,7 +73,7 @@ func SignUp(c echo.Context) error {
 
 	// 모든 처리가 끝난 후 200, Success 메시지를 반환
 	return c.JSON(http.StatusOK, map[string]string{
-		"message": "Success",
+		"message": fmt.Sprintf("create user %s as ID %v successfully", user.Username, userID),
 	})
 }
 
@@ -61,22 +87,26 @@ func SignIn(c echo.Context) error {
 	}
 	inputpw := user.Password
 
-	db := db.Connect()
-	result := db.Find(user, "email=?", user.Email)
-
 	// 존재하지않는 아이디일 경우
-	if result.RowsAffected == 0 {
-		return echo.ErrBadRequest
+	var (
+		foundUser models.User
+		err       error
+	)
+
+	if _, err := FindUser(user); err != nil { // not found
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "existing email",
+		})
 	}
 
-	res := helper.CheckPasswordHash(user.Password, inputpw)
+	res := helper.CheckPasswordHash(foundUser.Password, inputpw)
 
 	// 비밀번호 검증에 실패한 경우
 	if !res {
 		return echo.ErrUnauthorized
 	}
 	// 토큰 발행
-	accessToken, err := helper.CreateJWT(user.Email)
+	accessToken, err := helper.CreateJWT(user.Username)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}

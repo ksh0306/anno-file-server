@@ -1,23 +1,21 @@
 package main
 
 import (
-	"log"
 	"os"
 
-	"github.com/JEONG-YUNHO01/test-jwt/handler"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	md "github.com/labstack/echo/v4/middleware"
+	"github.com/nicewook/authjwt/handler"
 )
 
 func main() {
 
 	// godotenv는 로컬 개발환경에서 .env를 통해 환경변수를 읽어올 때 쓰는 모듈이다.
 	// 프로덕션 환경에서는 필요하지 않음.
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 	e := echo.New()
 
 	// 회원가입 API
