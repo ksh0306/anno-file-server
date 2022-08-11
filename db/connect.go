@@ -11,13 +11,13 @@ var (
 )
 
 func init() {
-	db, err := sql.Open("sqlite3", "users.db")
+	var err error
+	db, err = sql.Open("sqlite3", "users.db")
 	if err != nil {
 		panic(err)
 	}
 	sql := `
-	  CREATE TABLE IF NOT EXISTS users (
-		userid INTEGER PRIMARY KEY AUTOINCREMENT,
+    CREATE TABLE IF NOT EXISTS users (
 		username TEXT,
 		password TEXT);`
 

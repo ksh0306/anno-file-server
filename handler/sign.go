@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -25,13 +26,21 @@ func CreateUser(user *models.User) (int64, error) {
 }
 
 func FindUser(user *models.User) (models.User, error) {
-	var foundUser models.User
+	log.Println("findUser from db: ", user.Username)
+	foundUser := models.User{}
+	var username, password string
 	db := db.Connect()
-	row := db.QueryRow("SELECT * FROM users (username, password) WHERE username=?", user.Username)
+	row := db.QueryRow("SELECT username, password FROM users WHERE username=?", user.Username)
 
-	if err := row.Scan(&foundUser.Username, &foundUser.Password); err == sql.ErrNoRows {
-		return foundUser, errors.New("fail to find user")
+	if err := row.Scan(&username, &password); err != nil {
+		if err == sql.ErrNoRows {
+			return foundUser, errors.New("fail to find user")
+		}
+		return foundUser, err
 	}
+	log.Println("username, password: ", username, password)
+	foundUser.Username = username
+	foundUser.Password = password
 	return foundUser, nil
 }
 
@@ -47,15 +56,18 @@ func SignUp(c echo.Context) error {
 	}
 
 	// 이미 이메일이 존재할 경우의 처리
-	if _, err := FindUser(user); err == nil { // no error, already exist
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "existing email",
-		})
-	}
+	// if _, err := FindUser(user); err == nil { // no error, already exist
+	// 	return c.JSON(http.StatusBadRequest, map[string]string{
+	// 		"message": "existing user",
+	// 	})
+	// }
 
 	// 비밀번호를 bycrypt 라이브러리로 해싱 처리
+	log.Println("sign up attempt:", user.Username, user.Password)
+
 	hashpw, err := helper.HashPassword(user.Password)
 	if err != nil {
+		log.Println("password hashing failed")
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": err.Error(),
 		})
@@ -66,6 +78,7 @@ func SignUp(c echo.Context) error {
 	var userID int64
 
 	if userID, err = CreateUser(user); err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "Failed SignUp",
 		})
@@ -85,6 +98,7 @@ func SignIn(c echo.Context) error {
 			"message": "bad request",
 		})
 	}
+	log.Println("log in attempt:", user.Username, user.Password)
 	inputpw := user.Password
 
 	// 존재하지않는 아이디일 경우
@@ -93,16 +107,18 @@ func SignIn(c echo.Context) error {
 		err       error
 	)
 
-	if _, err := FindUser(user); err != nil { // not found
+	if foundUser, err = FindUser(user); err != nil { // not found
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "existing email",
+			"message": "no user found",
 		})
 	}
 
+	log.Println("user exist:", foundUser.Username, foundUser.Password)
 	res := helper.CheckPasswordHash(foundUser.Password, inputpw)
 
 	// 비밀번호 검증에 실패한 경우
 	if !res {
+		log.Println("wrong password:", foundUser.Password, inputpw)
 		return echo.ErrUnauthorized
 	}
 	// 토큰 발행

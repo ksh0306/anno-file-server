@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -16,6 +17,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal("Error loading .env file")
 	// }
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	e := echo.New()
 
 	// 회원가입 API
