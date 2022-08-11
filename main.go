@@ -26,6 +26,9 @@ func main() {
 	// 로그인 API(현재는 테스트용)
 	e.POST("/api/signin", handler.SignIn)
 
+	// uploaded fail management
+	e.POST("/api/upload", handler.Upload)
+
 	// 목데이터로 테스트
 	e.GET("/api/getlist", handler.MockData(), md.JWTWithConfig(md.JWTConfig{
 		SigningKey:  []byte(os.Getenv("SECRET_KEY")),
