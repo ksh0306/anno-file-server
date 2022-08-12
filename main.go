@@ -29,7 +29,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.POST("/signin", handler.SignIn)
+	e.POST("/login", handler.Login)
 	e.GET("/", handler.Accessible)
 
 	// Restricted group

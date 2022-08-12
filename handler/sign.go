@@ -89,7 +89,7 @@ func SignUp(c echo.Context) error {
 	})
 }
 
-func SignIn(c echo.Context) error {
+func Login(c echo.Context) error {
 	user := new(models.User)
 
 	if err := c.Bind(user); err != nil {
