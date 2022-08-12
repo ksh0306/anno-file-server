@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/nicewook/authjwt/db"
 	"github.com/nicewook/authjwt/helper"
@@ -121,22 +120,15 @@ func SignIn(c echo.Context) error {
 		log.Println("wrong password:", foundUser.Password, inputpw)
 		return echo.ErrUnauthorized
 	}
-	// 토큰 발행
+	// 검증완료 클레임 생성
 	accessToken, err := helper.CreateJWT(user.Username)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}
 
-	cookie := new(http.Cookie)
-	cookie.Name = "access-token"
-	cookie.Value = accessToken
-	cookie.HttpOnly = true
-	cookie.Expires = time.Now().Add(time.Hour * 24)
-
-	c.SetCookie(cookie)
-
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Login Success",
+		"token":   accessToken,
 	})
 }
 

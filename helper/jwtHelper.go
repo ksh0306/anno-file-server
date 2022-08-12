@@ -1,23 +1,32 @@
 package helper
 
 import (
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
 
-func CreateJWT(Email string) (string, error) {
-	mySigningKey := []byte(os.Getenv("SECRET_KEY"))
+// https://echo.labstack.com/cookbook/jwt/
 
-	aToken := jwt.New(jwt.SigningMethodHS256)
-	claims := aToken.Claims.(jwt.MapClaims)
-	claims["Email"] = Email
-	claims["exp"] = time.Now().Add(time.Minute * 20).Unix()
+type jwtCustomClaims struct {
+	Name string `json:"name"`
+	jwt.StandardClaims
+}
 
-	tk, err := aToken.SignedString(mySigningKey)
-	if err != nil {
-		return "", err
+func CreateJWT(name string) (string, error) {
+
+	secretkey := "should be env secret" // 나중에는 환경변수에 넣어주자. 클라이언트도 환경변수에서 읽게 하자
+	// Set custom claims
+	claims := &jwtCustomClaims{
+		name,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+		},
 	}
-	return tk, nil
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	return token.SignedString([]byte(secretkey))
 }
