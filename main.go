@@ -4,10 +4,16 @@ import (
 	"log"
 	"os"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
-	md "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/nicewook/authjwt/handler"
 )
+
+type jwtCustomClaims struct {
+	Name string `json:"name"`
+	jwt.StandardClaims
+}
 
 func main() {
 
@@ -18,19 +24,30 @@ func main() {
 	// 	log.Fatal("Error loading .env file")
 	// }
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	// 회원가입 API
-	e.POST("/api/signup", handler.SignUp)
+	e.POST("/signin", handler.SignIn)
+	e.GET("/", handler.Accessible)
 
-	// 로그인 API(현재는 테스트용)
-	e.POST("/api/signin", handler.SignIn)
-
-	// uploaded fail management
-	e.POST("/api/upload", handler.Upload)
+	// Restricted group
+	r := e.Group("/v1")
+	{
+		// Configure middleware with the custom claims type
+		secretKey := "should be env secret" // 나중에는 환경변수에 넣어주자. 클라이언트도 환경변수에서 읽게 하자
+		config := middleware.JWTConfig{
+			Claims:     &jwtCustomClaims{},
+			SigningKey: []byte(secretKey),
+		}
+		r.Use(middleware.JWTWithConfig(config))
+		r.POST("/signup", handler.SignUp)
+		r.POST("/upload", handler.Upload)
+	}
 
 	// 목데이터로 테스트
-	e.GET("/api/getlist", handler.MockData(), md.JWTWithConfig(md.JWTConfig{
+	e.GET("/api/getlist", handler.MockData(), middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  []byte(os.Getenv("SECRET_KEY")),
 		TokenLookup: "cookie:access-token",
 	}))

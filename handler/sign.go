@@ -121,7 +121,8 @@ func SignIn(c echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 	// 검증완료 클레임 생성
-	accessToken, err := helper.CreateJWT(user.Username)
+	secretKey := "should be env secret" // 나중에는 환경변수에 넣어주자. 클라이언트도 환경변수에서 읽게 하자
+	accessToken, err := helper.CreateJWT(user.Username, secretKey)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}
