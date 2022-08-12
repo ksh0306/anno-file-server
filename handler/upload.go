@@ -2,6 +2,7 @@ package handler
 
 import (
 	"archive/tar"
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -22,19 +23,25 @@ func validRelPath(p string) bool {
 }
 
 // https://github.com/mimoo/eureka/blob/master/folders.go
-func decompressTar(f *os.File, dst string) error {
-	fmt.Println("decompress tar: ", f.Name())
+func decompressTar(tarfile string) error {
+	dst := filepath.Dir(tarfile)
+	fmt.Printf("de-compress tar %v to %v --\n", tarfile, dst)
 
-	tr := tar.NewReader(f)
+	f, err := os.Open(tarfile)
+	if err != nil {
+		return err
+	}
 
+	tr := tar.NewReader(bufio.NewReader(f))
 	// uncompress each element
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {
-			fmt.Println("io.EOF")
+			fmt.Println("de-compress complete")
 			break // End of archive
 		}
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 		target := header.Name
@@ -99,21 +106,26 @@ func Upload(c echo.Context) error {
 	defer src.Close()
 
 	// Destination
-	dst, err := os.Create(filepath.Join("./uploaded", file.Filename))
+	tarfile := filepath.Join("./uploaded", file.Filename)
+	dst, err := os.Create(tarfile)
 	if err != nil {
 		log.Println("create ", file.Filename)
 		return err
 	}
-	defer dst.Close()
 
 	// Copy
 	if _, err = io.Copy(dst, src); err != nil {
 		log.Println("copy")
 		return err
 	}
-
+	defer dst.Close()
 	// decompress file
-	decompressTar(dst, "./uploaded")
+	if err := decompressTar(tarfile); err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "fail to decompress",
+		})
+	}
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "success",
