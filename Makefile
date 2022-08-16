@@ -12,7 +12,7 @@ build:
 	GOOS=darwin GOARCH=amd64 go build -o bin/annofileserver-darwin-amd64 .
 
 upload:
-	scp -P 51123 bin/annofileserver-linux-amd64 annowiz@222.110.65.138:app
+	scp -P 51123 bin/annofileserver-linux-amd64 server.crt server.key annowiz@222.110.65.138:app
 
 remote:
 	ssh -p 51123 annowiz@222.110.65.138

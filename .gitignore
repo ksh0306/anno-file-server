@@ -1,6 +1,9 @@
 # dotenv environment variables file
 .env
 *.db
+*.crt
+*.key
+*.db
 .DS_Store
 uploaded/
 bin/

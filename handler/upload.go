@@ -120,11 +120,14 @@ func Upload(c echo.Context) error {
 	}
 	defer dst.Close()
 	// decompress file
-	if err := decompressTar(tarfile); err != nil {
-		log.Println(err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"message": "fail to decompress",
-		})
+	if ext := filepath.Ext(tarfile); ext == "tar" {
+		log.Println("it is tar file")
+		if err := decompressTar(tarfile); err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"message": "fail to decompress",
+			})
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{

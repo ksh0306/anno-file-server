@@ -69,5 +69,9 @@ func main() {
 		TokenLookup: "cookie:access-token",
 	}))
 
-	e.Logger.Fatal(e.Start(httpPort))
+	go func() {
+		e.Logger.Fatal(e.Start(httpPort))
+	}()
+	e.Logger.Fatal(e.StartTLS(httpsPort, "server.crt", "server.key"))
+
 }
