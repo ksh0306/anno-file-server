@@ -119,9 +119,10 @@ func Upload(c echo.Context) error {
 		return err
 	}
 	defer dst.Close()
-	// decompress file
-	if ext := filepath.Ext(tarfile); ext == "tar" {
-		log.Println("it is tar file")
+
+	// decompress file if it's tar
+	if ext := filepath.Ext(tarfile); strings.Contains(ext, "tar") {
+		log.Println("it is tar file:", tarfile)
 		if err := decompressTar(tarfile); err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -129,6 +130,7 @@ func Upload(c echo.Context) error {
 			})
 		}
 	}
+	log.Println("success to receive")
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "success",
