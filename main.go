@@ -22,7 +22,8 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var ports string
-	flag.StringVar(&ports, "port", "8080:8443", "set http/https port. {http-port}:{https-port}")
+	flag.StringVar(&ports, "port", "80:443", "set http/https port. {http-port}:{https-port}")
+	flag.Parse()
 
 	p := strings.Split(ports, ":")
 	httpPort := ":" + p[0]

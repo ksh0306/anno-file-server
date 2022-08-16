@@ -7,7 +7,7 @@ build:
 	GOOS=darwin GOARCH=amd64 go build -o bin/annofileserver-darwin-amd64 .
 	
 run :
-	nodemon --exec go run main.go --signal SIGTERM
+	nodemon --exec go run main.go -port=8888:8443 --signal SIGTERM
 
 delete :
 	cd uploaded && rm -rf * && cd ..
