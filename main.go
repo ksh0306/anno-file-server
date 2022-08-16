@@ -17,10 +17,15 @@ type jwtCustomClaims struct {
 	jwt.StandardClaims
 }
 
+const (
+	uploadedDir = "uploaded"
+)
+
 func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	// port setting. default is 80 and 443
 	var ports string
 	flag.StringVar(&ports, "port", "80:443", "set http/https port. {http-port}:{https-port}")
 	flag.Parse()
@@ -31,8 +36,12 @@ func main() {
 
 	log.Printf("http port is %v, https port is %v\n", httpPort, httpsPort)
 
-	// echo
+	// make uploaded folder. MkdirAll will not do anything if directory already exist
+	if err := os.MkdirAll(uploadedDir, 0755); err != nil {
+		log.Fatal(err)
+	}
 
+	// echo
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

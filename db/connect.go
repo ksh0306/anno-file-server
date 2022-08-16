@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	// _ "github.com/mattn/go-sqlite3"
 	"github.com/nicewook/authjwt/helper"
+	_ "modernc.org/sqlite"
 )
 
 var (
@@ -16,7 +17,8 @@ func init() {
 
 	// connect
 	var err error
-	db, err = sql.Open("sqlite3", "users.db")
+	db, err = sql.Open("sqlite", "users.db")
+	// db, err = sql.Open("sqlite3", "users.db")
 	if err != nil {
 		panic(err)
 	}
