@@ -4,7 +4,7 @@ gencert:
 	# openssl ecparam -genkey -name secp384r1 -out server.key
 	openssl genrsa -out server.key 2048
 	openssl req -new -x509 -sha256 -key server.key -out server.crt -days 365
-	# openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
+	# openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650 # no good for apple
 	
 build: 
 	mkdir -p bin
@@ -14,6 +14,7 @@ build:
 
 upload:
 	scp -P 51123 bin/annofileserver-linux-amd64 server.crt server.key annowiz@222.110.65.138:app
+	# ssh -p 51123 annowiz@222.110.65.138 chmod 644 app/annofileserver-linux-amd64
 
 remote:
 	ssh -p 51123 annowiz@222.110.65.138

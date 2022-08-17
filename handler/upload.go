@@ -93,6 +93,7 @@ func Upload(c echo.Context) error {
 
 	// 1. receive file
 	log.Println("upload")
+	c.Request().ParseMultipartForm(128 << 20)
 	file, err := c.FormFile("file")
 	if err != nil {
 		log.Println("FormFile")
@@ -120,6 +121,15 @@ func Upload(c echo.Context) error {
 	}
 	defer dst.Close()
 
+	// file size check
+	fi, err := os.Stat(tarfile)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "fail to check size",
+		})
+	}
+	log.Printf("tar size: %d MB\n", fi.Size()/1024/1024)
 	// decompress file if it's tar
 	if ext := filepath.Ext(tarfile); strings.Contains(ext, "tar") {
 		log.Println("it is tar file:", tarfile)

@@ -45,6 +45,9 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.BodyLimitWithConfig(middleware.BodyLimitConfig{
+		Limit: "15G",
+	}))
 
 	e.POST("/login", handler.Login)
 	e.GET("/", handler.Accessible)
